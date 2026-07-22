@@ -1,0 +1,349 @@
+.refill-page {
+  min-height: 100vh;
+  background: #1c1c1c;
+  color: white;
+}
+
+
+/* NAVBAR */
+
+.refill-page .navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 5%;
+  background: #171717;
+}
+
+.refill-page .logo a {
+  color: white;
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.refill-page .navbar nav a {
+  color: white;
+  text-decoration: none;
+}
+
+
+/* LOCATION */
+
+.location-section {
+  padding: 50px 20px;
+}
+
+.location-content {
+  max-width: 720px;
+  margin: auto;
+  padding: 35px;
+  text-align: center;
+  background: #171717;
+  border-radius: 16px;
+}
+
+.location-content h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.location-content p {
+  color: #ccc;
+}
+
+
+/* LOCATION ACTIONS */
+
+.location-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.location-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #292929;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.location-input input {
+  width: 100%;
+  padding: 14px 5px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 15px;
+}
+
+.current-location-button {
+  padding: 12px 18px;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+.current-location-button:hover {
+  background: #292929;
+}
+
+
+/* GAS SIZE */
+
+.gas-size {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.gas-size select {
+  padding: 8px 12px;
+  background: #292929;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+
+/* SERVICE BUTTONS */
+
+.service-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.service-button {
+  padding: 12px 20px;
+  background: #222;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.service-button:hover,
+.service-button.active {
+  background: #303030;
+}
+
+
+/* ERRORS */
+
+.error-message {
+  max-width: 700px;
+  margin: 10px auto;
+  padding: 15px;
+  background: #401c1c;
+  color: #ff8c8c;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.loading-message {
+  text-align: center;
+  padding: 20px;
+}
+
+
+/* VENDORS */
+
+.vendors-section {
+  padding: 20px 5%;
+}
+
+.vendors-section h2 {
+  margin-bottom: 20px;
+}
+
+.vendor-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(260px, 1fr));
+
+  gap: 15px;
+}
+
+
+.vendor-card {
+  background: #292929;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 20px;
+  transition: 0.2s;
+}
+
+.vendor-card:hover {
+  transform: translateY(-3px);
+  border-color: #777;
+}
+
+.vendor-card.selected {
+  border: 2px solid #00c853;
+}
+
+
+.vendor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.vendor-header h3 {
+  margin: 0;
+}
+
+
+.verified {
+  background: #063d16;
+  color: #00e676;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+
+.vendor-distance {
+  color: #ccc;
+  font-size: 14px;
+}
+
+
+.vendor-gas {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+
+.vendor-gas strong {
+  color: white;
+}
+
+
+.vendor-status {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+
+.available {
+  color: #00e676;
+}
+
+
+.vendor-address,
+.vendor-phone {
+  color: #aaa;
+  font-size: 14px;
+}
+
+
+.select-vendor-button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 12px;
+  background: white;
+  color: #111;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.select-vendor-button:hover {
+  background: #ddd;
+}
+
+
+/* EMPTY STATE */
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  background: #222;
+  border-radius: 10px;
+  color: #aaa;
+}
+
+
+/* SELECTED VENDOR */
+
+.selected-vendor-section {
+  margin: 30px 5%;
+  padding: 25px;
+  background: #171717;
+  border-radius: 12px;
+}
+
+
+.fulfillment-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+
+.fulfillment-buttons button {
+  padding: 12px 30px;
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+
+/* HOW IT WORKS */
+
+.how-it-works {
+  padding: 30px 5%;
+}
+
+
+.steps {
+  display: grid;
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 10px;
+}
+
+
+.step {
+  background: #171717;
+  padding: 25px;
+  text-align: center;
+  border-radius: 8px;
+}
+
+
+.step span {
+  font-size: 25px;
+}
+
+
+@media (max-width: 700px) {
+
+  .location-actions {
+    flex-direction: column;
+  }
+
+  .steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
+}
