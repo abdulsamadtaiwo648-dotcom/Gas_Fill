@@ -1,0 +1,14 @@
+# Node
+/GasFilling/node_modules
+/GasFilling/FrontEnd/node_modules
+/GasFilling/FrontEnd/dist
+/GasFilling/FrontEnd/.env
+*.log
+
+# Go
+/bin/
+/out/
+
+# Editor
+.vscode/
+.DS_Store

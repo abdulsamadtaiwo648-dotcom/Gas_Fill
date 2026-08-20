@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"gasfill/internal/customer"
 	"gasfill/internal/handler"
@@ -277,90 +281,73 @@ func main() {
 		}
 	}
 
-	fileServer :=
-		http.FileServer(
-			http.Dir(frontendPath),
-		)
+	fileServer := http.FileServer(http.Dir(frontendPath))
 
-	mux.HandleFunc(
-		"/",
-		func(
-			w http.ResponseWriter,
-			r *http.Request,
-		) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Block /api/ paths from accidentally serving the frontend
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			http.NotFound(w, r)
+			return
+		}
 
-			if strings.HasPrefix(
-				r.URL.Path,
-				"/api/",
-			) {
+		// Clean and trim the requested path before joining with frontendPath.
+		// r.URL.Path may start with '/', and filepath.Join(frontendPath, "/index.html")
+		// would treat "/index.html" as absolute and ignore frontendPath.
+		cleanPath := strings.TrimPrefix(filepath.Clean(r.URL.Path), "/")
+		filePath := filepath.Join(frontendPath, cleanPath)
 
-				http.NotFound(
-					w,
-					r,
-				)
-
+		// If the path is not just the root, check if the file exists and serve it.
+		if r.URL.Path != "/" {
+			if _, err := os.Stat(filePath); err == nil {
+				// Serve the static file
+				fileServer.ServeHTTP(w, r)
 				return
 			}
+		}
 
-			filePath :=
-				filepath.Join(
-					frontendPath,
-					r.URL.Path,
-				)
-
-			if r.URL.Path != "/" {
-
-				if _, err :=
-					os.Stat(filePath); err == nil {
-
-					fileServer.ServeHTTP(
-						w,
-						r,
-					)
-
-					return
-				}
-			}
-
-			http.ServeFile(
-				w,
-				r,
-				filepath.Join(
-					frontendPath,
-					"index.html",
-				),
-			)
-		},
-	)
+		// Otherwise always serve index.html (SPA fallback)
+		http.ServeFile(w, r, filepath.Join(frontendPath, "index.html"))
+	})
 
 	// ==========================================
-	// START SERVER
+	// START SERVER (with PORT env and graceful shutdown)
 	// ==========================================
-
-	log.Println(
-		"========================================",
-	)
-
-	log.Println(
-		"GasFill API + Frontend",
-	)
-
-	log.Println(
-		"Running on http://localhost:8080",
-	)
-
-	log.Println(
-		"========================================",
-	)
-
-	err := http.ListenAndServe(
-		":8080",
-		handler.EnableCORS(mux),
-	)
-
-	if err != nil {
-		log.Fatal(err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+	addr := ":" + port
+
+	log.Println("========================================")
+	log.Println("GasFill API + Frontend")
+	log.Printf("Running on http://localhost%s\n", addr)
+	log.Println("========================================")
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: handler.EnableCORS(mux),
+	}
+
+	// run server in goroutine so we can gracefully shutdown
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %v\n", err)
+		}
+	}()
+
+	// wait for interrupt
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutdown signal received, shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server exited properly")
 }
 
 func setupSampleVendors(
