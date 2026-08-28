@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"gasfill/internal/location"
 )
@@ -65,6 +66,36 @@ func (s *Service) AddVendor(
 	return newVendor
 }
 
+func (s *Service) RegisterVendor(
+	name string,
+	phone string,
+	email string,
+	password string,
+	address string,
+	latitude float64,
+	longitude float64,
+) (Vendor, error) {
+
+	email = strings.TrimSpace(strings.ToLower(email))
+	if name == "" || email == "" || password == "" {
+		return Vendor{}, errors.New("business name, email, and password are required")
+	}
+
+	for _, existing := range s.vendors {
+		if existing.Email == email {
+			return Vendor{}, errors.New("vendor email already registered")
+		}
+	}
+
+	if latitude == 0 && longitude == 0 {
+		// Default fallback location for Nigeria (Port Harcourt region if unprovided)
+		latitude = 5.121
+		longitude = 7.373
+	}
+
+	return s.AddVendor(name, phone, email, password, address, latitude, longitude), nil
+}
+
 func (s *Service) Login(
 	email string,
 	password string,
@@ -96,10 +127,65 @@ func (s *Service) Login(
 	)
 }
 
+func (s *Service) UpdateVendorProfile(
+	vendorID string,
+	name string,
+	phone string,
+	address string,
+	latitude float64,
+	longitude float64,
+) (Vendor, error) {
+
+	v, exists := s.vendors[vendorID]
+	if !exists {
+		return Vendor{}, errors.New("vendor not found")
+	}
+
+	if name != "" {
+		v.Name = name
+	}
+	if phone != "" {
+		v.Phone = phone
+	}
+	if address != "" {
+		v.Address = address
+	}
+	if latitude != 0 {
+		v.Latitude = latitude
+	}
+	if longitude != 0 {
+		v.Longitude = longitude
+	}
+
+	s.vendors[vendorID] = v
+	return v, nil
+}
+
+func calculateStockStatus(availableStockKg float64, available bool) string {
+	if !available || availableStockKg <= 0 {
+		return "OUT_OF_STOCK"
+	}
+	if availableStockKg <= 50 {
+		return "LOW_STOCK"
+	}
+	return "IN_STOCK"
+}
+
 func (s *Service) AddInventory(
 	vendorID string,
 	weightKg float64,
 	pricePerKg float64,
+	available bool,
+) (GasInventory, error) {
+
+	return s.AddInventoryWithStock(vendorID, weightKg, pricePerKg, 500.0, available)
+}
+
+func (s *Service) AddInventoryWithStock(
+	vendorID string,
+	weightKg float64,
+	pricePerKg float64,
+	availableStockKg float64,
 	available bool,
 ) (GasInventory, error) {
 
@@ -123,14 +209,31 @@ func (s *Service) AddInventory(
 		)
 	}
 
+	// Update existing inventory record for this vendor and weight if present
+	for i, item := range s.inventory {
+		if item.VendorID == vendorID && item.WeightKg == weightKg {
+			s.inventory[i].PricePerKg = pricePerKg
+			s.inventory[i].AvailableStockKg = availableStockKg
+			s.inventory[i].Available = available
+			s.inventory[i].Status = calculateStockStatus(availableStockKg, available)
+			s.inventory[i].LastUpdated = time.Now()
+			return s.inventory[i], nil
+		}
+	}
+
 	s.nextItem++
 
+	status := calculateStockStatus(availableStockKg, available)
+
 	item := GasInventory{
-		ID:         fmt.Sprintf("INV-%03d", s.nextItem),
-		VendorID:   vendorID,
-		WeightKg:   weightKg,
-		PricePerKg: pricePerKg,
-		Available:  available,
+		ID:               fmt.Sprintf("INV-%03d", s.nextItem),
+		VendorID:         vendorID,
+		WeightKg:         weightKg,
+		PricePerKg:       pricePerKg,
+		AvailableStockKg: availableStockKg,
+		Available:        available,
+		Status:           status,
+		LastUpdated:      time.Now(),
 	}
 
 	s.inventory = append(
@@ -139,6 +242,58 @@ func (s *Service) AddInventory(
 	)
 
 	return item, nil
+}
+
+func (s *Service) UpdateInventory(
+	inventoryID string,
+	pricePerKg float64,
+	availableStockKg float64,
+	available bool,
+) (GasInventory, error) {
+
+	for i, item := range s.inventory {
+		if item.ID == inventoryID {
+			if pricePerKg > 0 {
+				s.inventory[i].PricePerKg = pricePerKg
+			}
+			s.inventory[i].AvailableStockKg = availableStockKg
+			s.inventory[i].Available = available
+			s.inventory[i].Status = calculateStockStatus(availableStockKg, available)
+			s.inventory[i].LastUpdated = time.Now()
+			return s.inventory[i], nil
+		}
+	}
+
+	return GasInventory{}, errors.New("inventory item not found")
+}
+
+func (s *Service) DeductInventoryStock(vendorID string, weightKg float64) error {
+	for i, item := range s.inventory {
+		if item.VendorID == vendorID && item.WeightKg == weightKg {
+			if item.AvailableStockKg < weightKg {
+				return fmt.Errorf("insufficient stock: required %.1f kg, available %.1f kg", weightKg, item.AvailableStockKg)
+			}
+			s.inventory[i].AvailableStockKg -= weightKg
+			if s.inventory[i].AvailableStockKg <= 0 {
+				s.inventory[i].AvailableStockKg = 0
+				s.inventory[i].Available = false
+			}
+			s.inventory[i].Status = calculateStockStatus(s.inventory[i].AvailableStockKg, s.inventory[i].Available)
+			s.inventory[i].LastUpdated = time.Now()
+			return nil
+		}
+	}
+	return nil // If specific inventory row is not strictly tracked, allow order to proceed
+}
+
+func (s *Service) GetVendorInventory(vendorID string) []GasInventory {
+	var results []GasInventory
+	for _, item := range s.inventory {
+		if item.VendorID == vendorID {
+			results = append(results, item)
+		}
+	}
+	return results
 }
 
 func (s *Service) GetVendorByID(
@@ -184,7 +339,7 @@ func (s *Service) FindNearbyVendors(
 
 	for _, inventory := range s.inventory {
 
-		if !inventory.Available {
+		if !inventory.Available || inventory.Status == "OUT_OF_STOCK" {
 			continue
 		}
 
@@ -206,7 +361,7 @@ func (s *Service) FindNearbyVendors(
 
 		vendorLocation :=
 			location.Coordinate{
-				Latitude: vendorData.Latitude,
+				Latitude:  vendorData.Latitude,
 				Longitude: vendorData.Longitude,
 			}
 

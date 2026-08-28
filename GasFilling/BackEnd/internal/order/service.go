@@ -20,6 +20,8 @@ func NewService() *Service {
 func (s *Service) CreateRefillOrder(
 	customerID string,
 	vendorID string,
+	vendorName string,
+	vendorAddress string,
 	fulfillment FulfillmentType,
 	weightKg float64,
 	pricePerKg float64,
@@ -68,20 +70,22 @@ func (s *Service) CreateRefillOrder(
 	now := time.Now()
 
 	newOrder := Order{
-		ID:          orderID,
-		CustomerID:  customerID,
-		VendorID:    vendorID,
-		Type:        OrderTypeRefill,
-		Fulfillment: fulfillment,
-		WeightKg:    weightKg,
-		GasCost:     gasCost,
-		DeliveryFee: deliveryFee,
-		TotalAmount: totalAmount,
-		Latitude:    latitude,
-		Longitude:   longitude,
-		Status:      StatusPending,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:            orderID,
+		CustomerID:    customerID,
+		VendorID:      vendorID,
+		VendorName:    vendorName,
+		VendorAddress: vendorAddress,
+		Type:          OrderTypeRefill,
+		Fulfillment:   fulfillment,
+		WeightKg:      weightKg,
+		GasCost:       gasCost,
+		DeliveryFee:   deliveryFee,
+		TotalAmount:   totalAmount,
+		Latitude:      latitude,
+		Longitude:     longitude,
+		Status:        StatusPending,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	s.orders[orderID] = newOrder
@@ -147,6 +151,87 @@ func (s *Service) GetVendorOrders(
 	}
 
 	return results
+}
+
+func (s *Service) GetRiderOrders(
+	riderID string,
+) []Order {
+
+	var results []Order
+
+	for _, currentOrder := range s.orders {
+		if currentOrder.RiderID == riderID {
+			results = append(results, currentOrder)
+		}
+	}
+
+	return results
+}
+
+func (s *Service) GetAvailableDeliveries() []Order {
+
+	var results []Order
+
+	for _, currentOrder := range s.orders {
+		// Deliveries ready for riders: ACCEPTED, PREPARING, or RIDER_ASSIGNED with no rider
+		if currentOrder.Fulfillment == FulfillmentDelivery &&
+			(currentOrder.Status == StatusAccepted ||
+				currentOrder.Status == StatusPreparing ||
+				currentOrder.Status == StatusRiderAssigned) {
+			results = append(results, currentOrder)
+		}
+	}
+
+	return results
+}
+
+func (s *Service) AssignRider(
+	orderID string,
+	riderID string,
+	riderName string,
+	riderPhone string,
+) (Order, error) {
+
+	currentOrder, exists := s.orders[orderID]
+	if !exists {
+		return Order{}, errors.New("order not found")
+	}
+
+	currentOrder.RiderID = riderID
+	currentOrder.RiderName = riderName
+	currentOrder.RiderPhone = riderPhone
+	currentOrder.Status = StatusRiderAssigned
+	currentOrder.UpdatedAt = time.Now()
+
+	s.orders[orderID] = currentOrder
+
+	return currentOrder, nil
+}
+
+func (s *Service) CancelOrder(
+	orderID string,
+	customerID string,
+) (Order, error) {
+
+	currentOrder, exists := s.orders[orderID]
+	if !exists {
+		return Order{}, errors.New("order not found")
+	}
+
+	if customerID != "" && currentOrder.CustomerID != customerID {
+		return Order{}, errors.New("unauthorized to cancel this order")
+	}
+
+	if currentOrder.Status == StatusDelivered || currentOrder.Status == StatusCancelled {
+		return Order{}, fmt.Errorf("cannot cancel order with status %s", currentOrder.Status)
+	}
+
+	currentOrder.Status = StatusCancelled
+	currentOrder.UpdatedAt = time.Now()
+
+	s.orders[orderID] = currentOrder
+
+	return currentOrder, nil
 }
 
 func (s *Service) UpdateOrderStatus(

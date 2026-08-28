@@ -1,3 +1,5 @@
+import { MapPin, Navigation, Check, Phone } from "lucide-react";
+
 function VendorCard({ vendor, onSelect }) {
   return (
     <div className="vendor-card">
@@ -5,10 +7,12 @@ function VendorCard({ vendor, onSelect }) {
       <div className="vendor-card-header">
         <div>
           <h3>{vendor.Vendor.Name}</h3>
-          <p>📍 {vendor.Vendor.Address}</p>
+          <p style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <MapPin size={13} /> {vendor.Vendor.Address}
+          </p>
         </div>
-        <span className="distance-badge">
-          📏 {vendor.DistanceKm.toFixed(2)} km away
+        <span className="distance-badge" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <Navigation size={12} /> {vendor.DistanceKm.toFixed(2)} km away
         </span>
       </div>
 
@@ -39,14 +43,16 @@ function VendorCard({ vendor, onSelect }) {
         <button
           className="primary-button"
           onClick={() => onSelect(vendor)}
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
         >
-          ✓ Select Vendor
+          <Check size={16} /> Select Vendor
         </button>
         <a
           href={`tel:${vendor.Vendor.Phone}`}
           className="secondary-button"
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6 }}
         >
-          📞 Call Vendor
+          <Phone size={16} /> Call Vendor
         </a>
       </div>
 

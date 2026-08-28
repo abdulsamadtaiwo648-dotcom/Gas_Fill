@@ -1,3 +1,4 @@
+import { Container, AlertTriangle, Check } from 'lucide-react';
 import { useState, useEffect } from "react";
 import Loading from "../components/Loading";
 import { getProducts, createRefillOrder } from "../services/api";
@@ -55,18 +56,18 @@ function BuyCylinder() {
     <div className="products-page">
       <div className="products-inner">
         <div className="page-top">
-          <span className="tag">🏭 Buy Cylinder</span>
+          <span className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Container size={14} /> Buy Cylinder</span>
           <h1>Buy New LPG Gas Cylinders</h1>
           <p>Browse tested and certified steel cooking gas cylinders directly from backend inventory.</p>
         </div>
 
-        {error && <div className="alert alert-error">⚠️ {error}</div>}
+        {error && <div className="alert alert-error"> {error}</div>}
 
         {loading ? (
           <Loading text="Loading cylinder products from database..." />
         ) : products.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🏭</div>
+            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}><Container size={48} color="var(--text-muted)" /></div>
             <h3>No cylinders found</h3>
             <p>No cylinders are currently available in the database.</p>
           </div>
@@ -81,7 +82,7 @@ function BuyCylinder() {
 
               return (
                 <div className="product-card" key={pid}>
-                  <div className="product-img">🏭</div>
+                  <div className="product-img" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Container size={40} color="var(--orange)" /></div>
                   <div className="product-body">
                     <span className="product-cat">CYLINDER</span>
                     <h3>{name}</h3>

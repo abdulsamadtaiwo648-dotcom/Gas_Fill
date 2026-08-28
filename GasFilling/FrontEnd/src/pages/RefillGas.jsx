@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import VendorCard from "../components/VendorCard";
 import Loading from "../components/Loading";
 import { getNearbyVendors, createRefillOrder, registerCustomer } from "../services/api";
+import { RefreshCw, Search, MapPin, AlertTriangle, Phone, PartyPopper } from "lucide-react";
 
 function RefillGas() {
   const [weightKg, setWeightKg] = useState(null);
@@ -160,7 +161,9 @@ function RefillGas() {
       <div className="refill-inner">
         {/* Header */}
         <div className="refill-header">
-          <span className="tag">🔄 Gas Refill</span>
+          <span className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <RefreshCw size={14} /> Gas Refill
+          </span>
           <h1>Refill Your Gas Cylinder</h1>
           <p>
             Select your cylinder size and we'll match you with available, verified vendors
@@ -190,13 +193,26 @@ function RefillGas() {
             className="btn btn-primary btn-lg find-btn"
             onClick={findGasNearMe}
             disabled={loading}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 }}
           >
-            {loading ? "🔍 Searching Nearby Vendors..." : "📍 Find Gas Near Me"}
+            {loading ? (
+              <>
+                <Search size={18} /> Searching Nearby Vendors...
+              </>
+            ) : (
+              <>
+                <MapPin size={18} /> Find Gas Near Me
+              </>
+            )}
           </button>
         </div>
 
         {/* Error */}
-        {error && <div className="alert alert-error">⚠️ {error}</div>}
+        {error && (
+          <div className="alert alert-error" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <AlertTriangle size={16} /> {error}
+          </div>
+        )}
 
         {/* DETAILS FORM MODAL OVERLAY */}
         {showDetailsForm && selectedVendor && (
@@ -311,10 +327,10 @@ function RefillGas() {
                 <div className="vendor-card-top">
                   <div>
                     <h3>{vendorItem.Vendor.Name}</h3>
-                    <p>📍 {vendorItem.Vendor.Address}</p>
+                    <p style={{ display: "flex", alignItems: "center", gap: 4 }}><MapPin size={13} /> {vendorItem.Vendor.Address}</p>
                   </div>
                   <span className="dist-pill">
-                    📏 {vendorItem.DistanceKm.toFixed(2)} km away
+                    {vendorItem.DistanceKm.toFixed(2)} km away
                   </span>
                 </div>
 
@@ -347,7 +363,7 @@ function RefillGas() {
                       href={`tel:${vendorItem.Vendor.Phone}`}
                       className="btn btn-secondary"
                     >
-                      📞 Call
+                      Call
                     </a>
                   )}
                 </div>
@@ -386,7 +402,7 @@ function RefillGas() {
         {/* Order Success */}
         {createdOrder && (
           <div className="alert alert-success" style={{ marginTop: 24, padding: 24, display: "block", textAlign: "center" }}>
-            <h2 style={{ color: "var(--green)", marginBottom: 8 }}>🎉 Refill Order Submitted!</h2>
+            <h2 style={{ color: "var(--green)", marginBottom: 8 }}>Refill Order Submitted!</h2>
             <p style={{ color: "var(--text)", fontSize: 15, marginBottom: 8 }}>
               Order ID: <strong>#{createdOrder.ID || createdOrder.id}</strong>
             </p>

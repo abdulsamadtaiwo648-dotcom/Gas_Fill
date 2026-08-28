@@ -1,3 +1,4 @@
+import { Flame, AlertTriangle, Check } from 'lucide-react';
 import { useState, useEffect } from "react";
 import Loading from "../components/Loading";
 import { getProducts, createRefillOrder, registerCustomer } from "../services/api";
@@ -130,7 +131,7 @@ function BuyGas() {
     <div className="products-page">
       <div className="products-inner">
         <div className="page-top">
-          <span className="tag">🛢️ Buy Gas</span>
+          <span className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Flame size={14} /> Buy Gas</span>
           <h1>Order Filled LPG Gas Cylinders</h1>
           <p>Connected live to backend inventory. Select your desired size for fast delivery.</p>
         </div>
@@ -148,7 +149,7 @@ function BuyGas() {
           ))}
         </div>
 
-        {error && <div className="alert alert-error">⚠️ {error}</div>}
+        {error && <div className="alert alert-error"> {error}</div>}
 
         {/* DETAILS FORM MODAL OVERLAY */}
         {selectedProduct && (
@@ -251,7 +252,7 @@ function BuyGas() {
           <Loading text="Fetching gas products from backend database..." />
         ) : filtered.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🛢️</div>
+            <div className="empty-icon" style={{ display: "inline-flex", justifyContent: "center" }}><Flame size={48} color="var(--text-muted)" /></div>
             <h3>No products found</h3>
             <p>Try changing your size filter or check back later.</p>
           </div>
@@ -266,7 +267,7 @@ function BuyGas() {
 
               return (
                 <div className="product-card" key={pid}>
-                  <div className="product-img">🛢️</div>
+                  <div className="product-img" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}><Flame size={40} color="var(--orange)" /></div>
                   <div className="product-body">
                     <span className="product-cat">LPG GAS</span>
                     <h3>{name}</h3>

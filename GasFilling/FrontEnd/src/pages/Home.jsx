@@ -1,13 +1,31 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { Flame, ShoppingBag, Store, Bike, RefreshCw, Container, Package } from "lucide-react";
 
 function Home() {
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
+    }
+  })();
+
+  if (user) {
+    const role = user.role || "customer";
+    if (role === "vendor") return <Navigate to="/vendor-dashboard" replace />;
+    if (role === "rider") return <Navigate to="/rider-dashboard" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="page">
       {/* ===== HERO ===== */}
       <section className="hero">
         <div className="hero-inner">
           <div>
-            <span className="hero-tag">🔥 On-Demand Cooking Gas Platform</span>
+            <span className="hero-tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Flame size={16} color="var(--orange)" /> On-Demand Cooking Gas Platform
+            </span>
             <h1>
               Cooking gas delivered <br />
               <span>to your doorstep.</span>
@@ -39,7 +57,9 @@ function Home() {
             </div>
           </div>
           <div className="hero-right">
-            <div className="hero-illustration">🛢️</div>
+            <div className="hero-illustration" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <Flame size={80} color="var(--orange)" />
+            </div>
           </div>
         </div>
       </section>
@@ -56,7 +76,9 @@ function Home() {
           <div className="role-grid">
             {/* Customer Role */}
             <div className="role-card">
-              <div className="role-icon role-icon-customer">🛍️</div>
+              <div className="role-icon role-icon-customer" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <ShoppingBag size={28} />
+              </div>
               <h3>Customer Portal</h3>
               <p>For homes and businesses needing cooking gas refilled or delivered fast.</p>
               <ul className="role-features">
@@ -71,7 +93,9 @@ function Home() {
 
             {/* Vendor Role */}
             <div className="role-card">
-              <div className="role-icon role-icon-vendor">🏪</div>
+              <div className="role-icon role-icon-vendor" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Store size={28} />
+              </div>
               <h3>Vendor Portal</h3>
               <p>For LPG gas plant owners, refilling stations, and cylinder retailers.</p>
               <ul className="role-features">
@@ -86,7 +110,9 @@ function Home() {
 
             {/* Rider Role */}
             <div className="role-card">
-              <div className="role-icon role-icon-rider">🛵</div>
+              <div className="role-icon role-icon-rider" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Bike size={28} />
+              </div>
               <h3>Rider Portal</h3>
               <p>For logistics dispatch riders and gas delivery drivers.</p>
               <ul className="role-features">
@@ -113,21 +139,27 @@ function Home() {
 
           <div className="service-grid">
             <div className="service-card">
-              <div className="service-icon">🔄</div>
+              <div className="service-icon" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <RefreshCw size={28} />
+              </div>
               <h3>Gas Cylinder Refill</h3>
               <p>Enter your location and cylinder weight. We'll match you with the closest vendor for instant refill pickup or delivery.</p>
               <Link to="/refill">Refill Gas Now →</Link>
             </div>
 
             <div className="service-card">
-              <div className="service-icon">🛢️</div>
+              <div className="service-icon" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Package size={28} />
+              </div>
               <h3>Buy Filled Cylinder</h3>
               <p>Order pre-filled gas cylinders in 3kg, 6kg, 12.5kg, or 25kg sizes with safety seal guaranteed.</p>
               <Link to="/buy-gas">Browse Products →</Link>
             </div>
 
             <div className="service-card">
-              <div className="service-icon">🏭</div>
+              <div className="service-icon" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Container size={28} />
+              </div>
               <h3>Buy New Cylinder</h3>
               <p>Purchase brand new high-quality steel LPG cylinders tested and certified for safety.</p>
               <Link to="/buy-cylinder">Browse Cylinders →</Link>
@@ -140,9 +172,12 @@ function Home() {
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-brand">
-            <div className="brand">🔥 Gas<span>Fill</span></div>
+            <div className="brand" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              <Flame size={20} color="var(--orange)" /> Gas<span>Fill</span>
+            </div>
             <p>Connecting households, gas vendors, and delivery riders across Nigeria.</p>
           </div>
+
           <div className="footer-col">
             <h4>Portals</h4>
             <ul>

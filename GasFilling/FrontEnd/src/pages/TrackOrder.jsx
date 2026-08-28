@@ -1,52 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getOrderById } from "../services/api";
+import { FileText, CheckCircle2, FlaskConical, Bike, Package, Truck, PartyPopper, AlertTriangle } from "lucide-react";
 
 function TrackOrder() {
-  const [orderId, setOrderId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [orderId, setOrderId] = useState(searchParams.get("orderId") || "");
   const [result, setResult]   = useState(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSearch(e) {
-    e.preventDefault();
+  async function fetchOrder(idToSearch) {
+    if (!idToSearch.trim()) return;
     setError("");
     setSearched(true);
-    setResult(null);
-
-    if (!orderId.trim()) {
-      setError("Please enter a valid Order ID.");
-      return;
-    }
-
     setLoading(true);
     try {
-      const data = await getOrderById(orderId.trim());
+      const data = await getOrderById(idToSearch.trim());
       setResult(data);
     } catch (err) {
-      setError("Order not found or backend server error.");
+      setError(err.message || "Order not found or backend server error.");
     } finally {
       setLoading(false);
     }
   }
 
-  const status = (result?.status || result?.Status || "pending").toLowerCase();
+  useEffect(() => {
+    const urlParam = searchParams.get("orderId");
+    if (urlParam) {
+      setOrderId(urlParam);
+      fetchOrder(urlParam);
+    }
+  }, [searchParams]);
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    fetchOrder(orderId);
+  }
+
+  const rawStatus = (result?.status || result?.Status || "PENDING").toUpperCase();
+
+  const statusOrder = [
+    "PENDING",
+    "ACCEPTED",
+    "PREPARING",
+    "RIDER_ASSIGNED",
+    "PICKED_UP",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+  ];
+
+  const currentStepIndex = statusOrder.indexOf(rawStatus);
 
   const timelineSteps = [
-    { icon: "📋", label: "Order Placed",    desc: "Order has been submitted.", done: true },
-    { icon: "✅", label: "Order Accepted",  desc: "Vendor confirmed availability.", done: status === "confirmed" || status === "delivered" },
-    { icon: "🚚", label: "Out for Delivery", desc: "Rider has picked up the gas.", done: status === "delivered" },
-    { icon: "🎉", label: "Delivered",       desc: "Delivered to your address.", done: status === "delivered" },
+    { icon: <FileText size={18} />, label: "Order Placed", desc: "Order submitted to depot.", step: "PENDING" },
+    { icon: <CheckCircle2 size={18} />, label: "Vendor Confirmed", desc: "Depot accepted refill request.", step: "ACCEPTED" },
+    { icon: <FlaskConical size={18} />, label: "Preparing Refill", desc: "Filling LPG cylinder at station.", step: "PREPARING" },
+    { icon: <Bike size={18} />, label: "Rider Assigned", desc: "Delivery partner assigned to pickup.", step: "RIDER_ASSIGNED" },
+    { icon: <Package size={18} />, label: "Picked Up", desc: "Cylinder collected from depot.", step: "PICKED_UP" },
+    { icon: <Truck size={18} />, label: "Out for Delivery", desc: "Rider is en route to your location.", step: "OUT_FOR_DELIVERY" },
+    { icon: <PartyPopper size={18} />, label: "Delivered", desc: "Safely delivered to customer address.", step: "DELIVERED" },
   ];
 
   return (
     <div className="track-page">
       <div className="track-inner">
-        <span className="tag">🚚 Track Order</span>
+        <span className="tag" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Truck size={14} /> Real-Time Tracking
+        </span>
         <h1 style={{ marginTop: 12, marginBottom: 8 }}>
-          Track Your Gas Delivery
+          Track Your Gas Refill & Delivery
         </h1>
-        <p>Enter your unique order ID below to see the real-time status timeline.</p>
+        <p>Enter your unique order ID below to monitor real-time delivery status.</p>
 
         {/* Search Form */}
         <form className="track-search" onSubmit={handleSearch}>
@@ -65,7 +91,7 @@ function TrackOrder() {
         {/* Error */}
         {searched && error && (
           <div className="alert alert-error">
-            ⚠️ {error}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><AlertTriangle size={16} /> {error}</span>
           </div>
         )}
 
@@ -82,46 +108,57 @@ function TrackOrder() {
                   Fulfillment: {result.fulfillment || "Delivery"}
                 </p>
               </div>
-              <span className={`badge badge-${status}`}>
-                {status.toUpperCase()}
+              <span className={`badge badge-${rawStatus.toLowerCase()}`}>
+                {rawStatus}
               </span>
             </div>
 
             <div className="track-details">
               <div className="track-detail">
                 <label>Vendor Station</label>
-                <span>ABC Gas Station</span>
+                <span>{result.vendorName || "ABC Gas Station"}</span>
               </div>
               <div className="track-detail">
-                <label>Fulfillment Cost</label>
-                <span>₦{Number(result.totalCost || result.TotalCost || 0).toLocaleString()}</span>
+                <label>Gas Cost</label>
+                <span>₦{Number(result.totalAmount || result.gasCost || 0).toLocaleString()}</span>
               </div>
               <div className="track-detail">
-                <label>Size / Weight</label>
+                <label>Weight</label>
                 <span>{result.weightKg || result.WeightKg} KG</span>
               </div>
               <div className="track-detail">
-                <label>Delivery Fee</label>
-                <span>₦{Number(result.deliveryFee || result.DeliveryFee || 1000).toLocaleString()}</span>
+                <label>Assigned Rider</label>
+                <span>{result.riderName ? `${result.riderName} (${result.riderPhone})` : "Pending Rider"}</span>
               </div>
             </div>
 
-            <h3 style={{ marginBottom: 20, fontSize: 15 }}>Delivery Progress</h3>
+            {rawStatus === "CANCELLED" && (
+              <div className="alert alert-error" style={{ margin: "20px 0" }}>
+                This order was cancelled.
+              </div>
+            )}
+
+            <h3 style={{ marginBottom: 20, fontSize: 15 }}>Order Lifecycle Milestone Progress</h3>
 
             <div className="timeline">
-              {timelineSteps.map((step, i) => (
-                <div className="tl-item" key={i}>
-                  <div className={`tl-dot ${step.done ? "done" : ""}`}>
-                    {step.icon}
+              {timelineSteps.map((step, i) => {
+                const stepIdx = statusOrder.indexOf(step.step);
+                const isDone = rawStatus !== "CANCELLED" && currentStepIndex >= stepIdx;
+
+                return (
+                  <div className="tl-item" key={i}>
+                    <div className={`tl-dot ${isDone ? "done" : ""}`}>
+                      {step.icon}
+                    </div>
+                    <div className="tl-body">
+                      <h4 style={{ color: isDone ? "var(--text)" : "var(--text-muted)" }}>
+                        {step.label}
+                      </h4>
+                      <p>{step.desc}</p>
+                    </div>
                   </div>
-                  <div className="tl-body">
-                    <h4 style={{ color: step.done ? "var(--text)" : "var(--text-muted)" }}>
-                      {step.label}
-                    </h4>
-                    <p>{step.desc}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

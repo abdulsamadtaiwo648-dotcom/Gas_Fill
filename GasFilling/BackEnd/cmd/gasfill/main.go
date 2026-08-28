@@ -44,6 +44,8 @@ func main() {
 	setupSampleVendors(
 		vendorService,
 		productService,
+		riderService,
+		customerService,
 	)
 
 	// ==========================================
@@ -73,6 +75,8 @@ func main() {
 	orderHandler :=
 		handler.NewOrderHandler(
 			orderService,
+			vendorService,
+			riderService,
 		)
 
 	riderHandler :=
@@ -113,6 +117,20 @@ func main() {
 	)
 
 	// ==========================================
+	// AUTH / OTP
+	// ==========================================
+
+	mux.HandleFunc(
+		"/api/auth/send-otp",
+		handler.SendOTP,
+	)
+
+	mux.HandleFunc(
+		"/api/auth/verify-otp",
+		handler.VerifyOTP,
+	)
+
+	// ==========================================
 	// CUSTOMER
 	// ==========================================
 
@@ -141,8 +159,18 @@ func main() {
 	// ==========================================
 
 	mux.HandleFunc(
+		"/api/vendors/register",
+		vendorHandler.Register,
+	)
+
+	mux.HandleFunc(
 		"/api/vendors/login",
 		vendorHandler.Login,
+	)
+
+	mux.HandleFunc(
+		"/api/vendors/inventory",
+		vendorHandler.AddOrUpdateInventory,
 	)
 
 	mux.HandleFunc(
@@ -216,6 +244,16 @@ func main() {
 	)
 
 	mux.HandleFunc(
+		"/api/orders/rider/",
+		orderHandler.GetRiderOrders,
+	)
+
+	mux.HandleFunc(
+		"/api/orders/deliveries/available",
+		orderHandler.GetAvailableDeliveries,
+	)
+
+	mux.HandleFunc(
 		"/api/orders/",
 		func(
 			w http.ResponseWriter,
@@ -226,12 +264,32 @@ func main() {
 				r.URL.Path,
 				"/status",
 			) {
-
 				orderHandler.UpdateStatus(
 					w,
 					r,
 				)
+				return
+			}
 
+			if strings.HasSuffix(
+				r.URL.Path,
+				"/assign-rider",
+			) {
+				orderHandler.AssignRider(
+					w,
+					r,
+				)
+				return
+			}
+
+			if strings.HasSuffix(
+				r.URL.Path,
+				"/cancel",
+			) {
+				orderHandler.CancelOrder(
+					w,
+					r,
+				)
 				return
 			}
 
@@ -346,7 +404,7 @@ func main() {
 	)
 
 	log.Println(
-		"Running on http://localhost:8080",
+		"Running on http://127.0.0.1:8080 (http://localhost:8080)",
 	)
 
 	log.Println(
@@ -366,7 +424,17 @@ func main() {
 func setupSampleVendors(
 	vendorService *vendor.Service,
 	productService *product.Service,
+	riderService *rider.Service,
+	customerService *customer.Service,
 ) {
+	// ==========================================
+	// SAMPLE RIDERS & CUSTOMER
+	// ==========================================
+
+	riderService.AddRider("Swift Delivery Rider", "08099887766", "rider@gasfill.com", "123456")
+	riderService.AddRider("Express Logistics Rider", "08055443322", "express@gasfill.com", "123456")
+
+	customerService.Register("Amaka", "Johnson", "08012345678", "customer@gasfill.com", "123456")
 
 	// ==========================================
 	// VENDOR 1
